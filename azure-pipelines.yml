@@ -12,41 +12,37 @@ trigger:
 - main
 
 pool:
-  name: Default   # your self-hosted agent pool
+  name: Default   # self-hosted agent pool
 
 variables:
   JAVA_HOME: 'C:\java\jdk-11.0.29+7'
-  MAVEN_OPTS: '-Xmx1024m'
+  MAVEN_HOME: 'C:\maven\apache-maven-3.9.12'
+  PATH: '$(MAVEN_HOME)\bin;$(JAVA_HOME)\bin;$(PATH)'
 
 steps:
 
-# 1 Verify Java
+# 1️⃣ Verify Java
 - script: |
-    echo "Checking Java version"
+    echo "===== JAVA VERSION ====="
     java -version
   displayName: 'Verify Java Version'
 
-# 2 Verify Maven
+# 2️⃣ Verify Maven
 - script: |
-    echo "Checking Maven version"
+    echo "===== MAVEN VERSION ====="
     mvn -version
   displayName: 'Verify Maven Version'
 
-# 3 Build & Run Selenium Tests
-- task: Maven@4
+# 3️⃣ Build & Run Selenium Tests (IMPORTANT FIX)
+- script: |
+    echo "===== RUNNING SELENIUM TESTS ====="
+    mvn clean test
   displayName: 'Build & Run Selenium Tests'
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean test'
-    options: '-X'
-    javaHomeOption: 'Path'
-    jdkDirectory: '$(JAVA_HOME)'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-# 4 Publish Test Results
+# 4️⃣ Publish Test Results
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
