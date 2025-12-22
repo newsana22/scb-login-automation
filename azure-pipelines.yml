@@ -5,13 +5,6 @@
 
 # Azure DevOps Pipeline for Selenium Automation (Self-hosted Agent)
 # Author: Sana Ansari
-# ==========================================
-# Azure DevOps Pipeline – Selenium + Maven
-# Self-hosted Windows Agent
-# Author: Sana Ansari
-# Java 11 | Maven
-# ==========================================
-
 trigger:
 - main
 
@@ -20,49 +13,27 @@ pool:
 
 steps:
 
-# ------------------------------------------
-# 1️⃣ Install / Configure Java 11 (SAFE WAY)
-# ------------------------------------------
-- task: JavaToolInstaller@0
-  displayName: 'Set up Java 11'
-  inputs:
-    versionSpec: '11'
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled'
-
-# ------------------------------------------
-# 2️⃣ Verify Java
-# ------------------------------------------
+# 1️⃣ Verify Java
 - script: |
-    echo "JAVA HOME = %JAVA_HOME%"
+    echo "JAVA HOME:"
+    echo %JAVA_HOME%
+    where java
     java -version
   displayName: 'Verify Java Version'
 
-# ------------------------------------------
-# 3️⃣ Verify Maven
-# ------------------------------------------
+# 2️⃣ Verify Maven
 - script: |
+    echo "MAVEN HOME:"
+    where mvn
     mvn -version
   displayName: 'Verify Maven Version'
 
-# ------------------------------------------
-# 4️⃣ Build & Run Selenium Tests
-# ------------------------------------------
-- task: Maven@4
+# 3️⃣ Build & Run Selenium Tests
+- script: |
+    mvn clean test
   displayName: 'Build & Run Selenium Tests'
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean test'
-    options: '-X'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
 
-# ------------------------------------------
-# 5️⃣ Publish Test Results
-# ------------------------------------------
+# 4️⃣ Publish Test Results
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
   inputs:
