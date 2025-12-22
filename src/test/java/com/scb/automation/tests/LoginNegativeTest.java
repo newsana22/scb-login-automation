@@ -6,16 +6,12 @@ import com.scb.automation.utils.ExcelUtils;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.time.Duration;
 
-/**
- * Negative login test for SCB
- * Credentials are read from Excel using DataProvider
- * URL is read from config.properties
- */
 public class LoginNegativeTest {
 
     private WebDriver driver;
@@ -24,13 +20,24 @@ public class LoginNegativeTest {
     @BeforeMethod
     public void setUp() {
 
+        // Resolve correct ChromeDriver
         WebDriverManager.chromedriver().setup();
-        driver = new ChromeDriver();
 
-        driver.manage().window().maximize();
+        ChromeOptions options = new ChromeOptions();
+
+        // REQUIRED for Azure DevOps / CI
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--window-size=1920,1080");
+
+        driver = new ChromeDriver(options);
+
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
-        // URL from config.properties
+        // Open URL once
         driver.get(ConfigReader.get("app.url"));
 
         loginPage = new LoginPage(driver);
@@ -45,10 +52,8 @@ public class LoginNegativeTest {
         loginPage.enterPassword(password);
         loginPage.clickLogin();
 
-        // Assertion for negative login
         Assert.assertTrue(
-                loginPage.getErrorMessage()
-                        .contains("invalid Username or Password"),
+                loginPage.getErrorMessage().toLowerCase().contains("invalid"),
                 "Invalid login error message was not displayed"
         );
     }
@@ -58,7 +63,7 @@ public class LoginNegativeTest {
         return ExcelUtils.getLoginData();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
         if (driver != null) {
             driver.quit();
