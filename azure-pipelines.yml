@@ -10,7 +10,7 @@ trigger:
 - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: Default   # Self-hosted agent (your laptop)
 
 steps:
 - task: Maven@3
