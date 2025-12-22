@@ -5,44 +5,66 @@
 
 # Azure DevOps Pipeline for Selenium Automation (Self-hosted Agent)
 # Author: Sana Ansari
-# Java: 11
-# Maven: Local Maven (3.9.12)
+# ==========================================
+# Azure DevOps Pipeline – Selenium + Maven
+# Self-hosted Windows Agent
+# Author: Sana Ansari
+# Java 11 | Maven
+# ==========================================
 
 trigger:
 - main
 
 pool:
-  name: Default   # self-hosted agent pool
-
-variables:
-  JAVA_HOME: 'C:\java\jdk-11.0.29+7'
-  MAVEN_HOME: 'C:\maven\apache-maven-3.9.12'
-  PATH: '$(MAVEN_HOME)\bin;$(JAVA_HOME)\bin;$(PATH)'
+  name: Default   # your self-hosted agent pool
 
 steps:
 
-# 1️⃣ Verify Java
+# ------------------------------------------
+# 1️⃣ Install / Configure Java 11 (SAFE WAY)
+# ------------------------------------------
+- task: JavaToolInstaller@0
+  displayName: 'Set up Java 11'
+  inputs:
+    versionSpec: '11'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+
+# ------------------------------------------
+# 2️⃣ Verify Java
+# ------------------------------------------
 - script: |
-    echo "===== JAVA VERSION ====="
+    echo "JAVA HOME = %JAVA_HOME%"
     java -version
   displayName: 'Verify Java Version'
 
-# 2️⃣ Verify Maven
+# ------------------------------------------
+# 3️⃣ Verify Maven
+# ------------------------------------------
 - script: |
-    echo "===== MAVEN VERSION ====="
     mvn -version
   displayName: 'Verify Maven Version'
 
-# 3️⃣ Build & Run Selenium Tests (IMPORTANT FIX)
-- script: |
-    echo "===== RUNNING SELENIUM TESTS ====="
-    mvn clean test
+# ------------------------------------------
+# 4️⃣ Build & Run Selenium Tests
+# ------------------------------------------
+- task: Maven@4
   displayName: 'Build & Run Selenium Tests'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean test'
+    options: '-X'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
 
-# 4️⃣ Publish Test Results
+# ------------------------------------------
+# 5️⃣ Publish Test Results
+# ------------------------------------------
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
-  condition: succeededOrFailed()
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
