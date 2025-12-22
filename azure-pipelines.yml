@@ -5,38 +5,37 @@
 
 # Azure DevOps Pipeline for Selenium Automation (Self-hosted Agent)
 # Author: Sana Ansari
+
 trigger:
 - main
 
 pool:
-  name: Default   # your self-hosted agent pool
+  name: Default   # self-hosted Windows agent
 
 steps:
 
 # 1️⃣ Verify Java
 - script: |
-    echo "JAVA HOME:"
-    echo %JAVA_HOME%
+    echo JAVA_HOME=%JAVA_HOME%
     where java
     java -version
   displayName: 'Verify Java Version'
 
 # 2️⃣ Verify Maven
 - script: |
-    echo "MAVEN HOME:"
     where mvn
     mvn -version
   displayName: 'Verify Maven Version'
 
-# 3️⃣ Build & Run Selenium Tests
+# 3️⃣ Build & Run Selenium Tests (HEADLESS)
 - script: |
-    mvn clean test
+    mvn clean test -e -X
   displayName: 'Build & Run Selenium Tests'
 
-# 4️⃣ Publish Test Results
+# 4️⃣ Publish Test Results (even if tests fail)
 - task: PublishTestResults@2
+  condition: succeededOrFailed()
   displayName: 'Publish Test Results'
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    failTaskOnFailedTests: true
