@@ -3,28 +3,48 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
-# Azure DevOps Pipeline for Selenium Automation (SCB Login)
+# Azure DevOps Pipeline for Selenium Automation (Self-hosted Agent)
 # Author: Sana Ansari
+# Java: 11
+# Maven: Local Maven (3.9.12)
 
 trigger:
 - main
 
 pool:
-  name: Default   # Self-hosted agent (your laptop)
+  name: Default   # your self-hosted agent pool
+
+variables:
+  JAVA_HOME: 'C:\java\jdk-11.0.29+7'
+  MAVEN_OPTS: '-Xmx1024m'
 
 steps:
-- task: Maven@3
+
+# 1 Verify Java
+- script: |
+    echo "Checking Java version"
+    java -version
+  displayName: 'Verify Java Version'
+
+# 2 Verify Maven
+- script: |
+    echo "Checking Maven version"
+    mvn -version
+  displayName: 'Verify Maven Version'
+
+# 3 Build & Run Selenium Tests
+- task: Maven@4
   displayName: 'Build & Run Selenium Tests'
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'clean test'
-    mavenOptions: '-Xmx1024m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
+    options: '-X'
+    javaHomeOption: 'Path'
+    jdkDirectory: '$(JAVA_HOME)'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
+# 4 Publish Test Results
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
   inputs:
