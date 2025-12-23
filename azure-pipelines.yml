@@ -5,20 +5,23 @@
 # Purpose:
 # - Run Selenium TestNG automation
 # - Generate Extent HTML report
-# - Capture screenshots (Base64)
+# - Capture step-level screenshots (Base64)
 # - Publish reports as pipeline artifacts
 # ============================================================
 
 trigger:
   - main
 
+# ------------------------------------------------------------
+# Use self-hosted agent (your laptop)
+# ------------------------------------------------------------
 pool:
-  name: Default   # Self-hosted agent (your laptop)
+  name: Default
 
 steps:
 
   # ------------------------------------------------------------
-  # STEP 1: Verify Java
+  # STEP 1: Verify Java installation
   # ------------------------------------------------------------
   - script: |
       echo JAVA_HOME=%JAVA_HOME%
@@ -27,7 +30,7 @@ steps:
     displayName: 'Verify Java Version'
 
   # ------------------------------------------------------------
-  # STEP 2: Verify Maven
+  # STEP 2: Verify Maven installation
   # ------------------------------------------------------------
   - script: |
       where mvn
@@ -35,41 +38,35 @@ steps:
     displayName: 'Verify Maven Version'
 
   # ------------------------------------------------------------
-  # STEP 3: Create required folders (IMPORTANT)
-  # ------------------------------------------------------------
-  - script: |
-      echo Creating required folders...
-      mkdir reports
-      mkdir screenshots
-    displayName: 'Prepare Report Directories'
-
-  # ------------------------------------------------------------
-  # STEP 4: Build & Run Selenium Tests
+  # STEP 3: Build & Run Selenium Tests
   # ------------------------------------------------------------
   - script: |
       mvn clean test
     displayName: 'Build & Run Selenium Tests'
 
   # ------------------------------------------------------------
-  # STEP 5: Publish JUnit Results (Azure UI)
+  # STEP 4: Publish TestNG / JUnit Results to Azure UI
   # ------------------------------------------------------------
   - task: PublishTestResults@2
-    condition: succeededOrFailed()
     displayName: 'Publish Test Results'
+    condition: succeededOrFailed()
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      mergeTestResults: true
 
   # ------------------------------------------------------------
-  # STEP 6: Publish Extent Report + Test Outputs
+  # STEP 5: Publish Automation Reports (SAFE – Option 1)
+  # ------------------------------------------------------------
+  # WHY:
+  # - Prevents "Path not found" errors
+  # - Ensures Extent report + screenshots are always available
+  # - Best practice for CI pipelines
   # ------------------------------------------------------------
   - task: PublishBuildArtifacts@1
-    condition: succeededOrFailed()
     displayName: 'Publish Automation Reports'
+    condition: succeededOrFailed()
     inputs:
-      PathtoPublish: |
-        reports
-        screenshots
-        target/surefire-reports
+      PathtoPublish: '$(System.DefaultWorkingDirectory)'
       ArtifactName: 'automation-test-reports'
       publishLocation: 'Container'
