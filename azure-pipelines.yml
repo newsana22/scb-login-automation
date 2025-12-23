@@ -14,25 +14,25 @@ pool:
 
 steps:
 
-# 1️⃣ Verify Java
+# 1️ Verify Java
 - script: |
     echo JAVA_HOME=%JAVA_HOME%
     where java
     java -version
   displayName: 'Verify Java Version'
 
-# 2️⃣ Verify Maven
+# 2️ Verify Maven
 - script: |
     where mvn
     mvn -version
   displayName: 'Verify Maven Version'
 
-# 3️⃣ Build & Run Selenium Tests (HEADLESS)
+# 3 Build & Run Selenium Tests (HEADLESS)
 - script: |
-    mvn clean test -e -X
+    mvn clean test
   displayName: 'Build & Run Selenium Tests'
 
-# 4️⃣ Publish Test Results (even if tests fail)
+# 4 Publish Test Results (even if tests fail)
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   displayName: 'Publish Test Results'
