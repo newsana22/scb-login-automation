@@ -5,7 +5,7 @@
 # Purpose:
 # - Run Selenium TestNG automation
 # - Generate Extent HTML report
-# - Capture screenshots on failure
+# - Capture screenshots (Base64)
 # - Publish reports as pipeline artifacts
 # ============================================================
 
@@ -35,14 +35,23 @@ steps:
     displayName: 'Verify Maven Version'
 
   # ------------------------------------------------------------
-  # STEP 3: Build & Run Selenium Tests
+  # STEP 3: Create required folders (IMPORTANT)
+  # ------------------------------------------------------------
+  - script: |
+      echo Creating required folders...
+      mkdir reports
+      mkdir screenshots
+    displayName: 'Prepare Report Directories'
+
+  # ------------------------------------------------------------
+  # STEP 4: Build & Run Selenium Tests
   # ------------------------------------------------------------
   - script: |
       mvn clean test
     displayName: 'Build & Run Selenium Tests'
 
   # ------------------------------------------------------------
-  # STEP 4: Publish JUnit Results (Azure UI)
+  # STEP 5: Publish JUnit Results (Azure UI)
   # ------------------------------------------------------------
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -52,7 +61,7 @@ steps:
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
   # ------------------------------------------------------------
-  # STEP 5: Publish Extent Report + Screenshots
+  # STEP 6: Publish Extent Report + Test Outputs
   # ------------------------------------------------------------
   - task: PublishBuildArtifacts@1
     condition: succeededOrFailed()
