@@ -10,35 +10,37 @@ import org.openqa.selenium.WebDriver;
  * ------------------------------------------------------------
  * Purpose:
  * - Capture screenshots from Selenium WebDriver
- * - Return screenshot in Base64 format (BEST for ExtentReports)
+ * - Return screenshot as Base64 string
  *
  * Why Base64?
- * - Avoids broken image issues in Extent HTML report
+ * - No broken image issues
  * - Works in:
  *   ✔ UI mode
  *   ✔ Headless mode
- *   ✔ Azure DevOps pipelines
+ *   ✔ Azure DevOps pipeline
  * ============================================================
  */
 public class ScreenshotUtil {
 
     /**
-     * Captures screenshot and returns Base64 string
+     * Capture screenshot in Base64 format
      *
-     * @return Base64 screenshot (String)
+     * @return Base64 encoded screenshot
      */
-    public static String captureScreenshotBase64() {
+    public static String captureBase64() {
 
         try {
-            // Get current active WebDriver instance
             WebDriver driver = DriverFactory.getDriver();
 
-            // Capture screenshot in Base64 format
+            if (driver == null) {
+                return null;
+            }
+
             return ((TakesScreenshot) driver)
                     .getScreenshotAs(OutputType.BASE64);
 
         } catch (Exception e) {
-            System.out.println("Failed to capture screenshot: " + e.getMessage());
+            System.out.println("Screenshot capture failed: " + e.getMessage());
             return null;
         }
     }

@@ -53,3 +53,7 @@ build/
 # Kotlin (safe to keep)
 # =========================================================
 .kotlin
+
+# OS / temp files
+*.log
+*.tmp

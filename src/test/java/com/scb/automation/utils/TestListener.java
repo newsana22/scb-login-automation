@@ -1,7 +1,6 @@
 package com.scb.automation.utils;
 
 import com.aventstack.extentreports.*;
-import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import org.testng.*;
 
 /**
@@ -9,40 +8,27 @@ import org.testng.*;
  * TestNG Listener: TestListener
  * ------------------------------------------------------------
  * Responsibilities:
- * - Initialize Extent HTML report
- * - Log test PASS / FAIL / SKIP
- * - Attach screenshots for:
- *   ✔ Success
- *   ✔ Failure
- * - Flush report after execution
+ * - Create Extent test
+ * - Capture screenshots on:
+ *   ✔ PASS
+ *   ✔ FAIL
+ * - Flush report after suite
  * ============================================================
  */
 public class TestListener implements ITestListener {
 
-    private static ExtentReports extent;
+    private static ExtentReports extent = ExtentManager.getExtent();
     private static ThreadLocal<ExtentTest> test = new ThreadLocal<>();
 
     /**
-     * Runs once before test suite starts
+     * Expose ExtentTest for step-level logging
      */
-    @Override
-    public void onStart(ITestContext context) {
-
-        ExtentSparkReporter reporter =
-                new ExtentSparkReporter("reports/ExtentReport.html");
-
-        reporter.config().setReportName("SCB Automation Test Report");
-        reporter.config().setDocumentTitle("SCB Login Automation");
-
-        extent = new ExtentReports();
-        extent.attachReporter(reporter);
-
-        extent.setSystemInfo("Environment", "QA");
-        extent.setSystemInfo("Executed By", "Sana Ansari");
+    public static ExtentTest getTest() {
+        return test.get();
     }
 
     /**
-     * Runs before each test method
+     * Before each test
      */
     @Override
     public void onTestStart(ITestResult result) {
@@ -52,50 +38,41 @@ public class TestListener implements ITestListener {
     }
 
     /**
-     * Runs when test PASSES
+     * On test success
      */
     @Override
     public void onTestSuccess(ITestResult result) {
 
-        // Capture Base64 screenshot
-        String base64Screenshot =
-                ScreenshotUtil.captureScreenshotBase64();
-
-        // Attach screenshot to Extent report
         test.get().pass("Test Passed Successfully");
 
-        if (base64Screenshot != null) {
+        String base64 = ScreenshotUtil.captureBase64();
+        if (base64 != null) {
             test.get().addScreenCaptureFromBase64String(
-                    base64Screenshot,
+                    base64,
                     "Final state after successful execution"
             );
         }
     }
 
     /**
-     * Runs when test FAILS
+     * On test failure
      */
     @Override
     public void onTestFailure(ITestResult result) {
 
-        // Log failure reason
         test.get().fail(result.getThrowable());
 
-        // Capture Base64 screenshot
-        String base64Screenshot =
-                ScreenshotUtil.captureScreenshotBase64();
-
-        // Attach screenshot to Extent report
-        if (base64Screenshot != null) {
+        String base64 = ScreenshotUtil.captureBase64();
+        if (base64 != null) {
             test.get().addScreenCaptureFromBase64String(
-                    base64Screenshot,
+                    base64,
                     "Failure Screenshot"
             );
         }
     }
 
     /**
-     * Runs when test is SKIPPED
+     * On test skipped
      */
     @Override
     public void onTestSkipped(ITestResult result) {
@@ -103,7 +80,7 @@ public class TestListener implements ITestListener {
     }
 
     /**
-     * Runs once after suite execution
+     * After suite execution
      */
     @Override
     public void onFinish(ITestContext context) {
