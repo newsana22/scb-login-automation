@@ -1,8 +1,15 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="SCB Automation Suite">
-    <test name="Login Negative Test">
+
+<suite name="SCB Test Suite">
+
+    <listeners>
+        <listener class-name="com.scb.automation.utils.TestListener"/>
+    </listeners>
+
+    <test name="Login Tests">
         <classes>
             <class name="com.scb.automation.tests.LoginNegativeTest"/>
         </classes>
     </test>
+
 </suite>

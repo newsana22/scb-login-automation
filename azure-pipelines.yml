@@ -1,41 +1,66 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
-# Azure DevOps Pipeline for Selenium Automation (Self-hosted Agent)
+# ============================================================
+# Azure DevOps Pipeline – Selenium Automation
 # Author: Sana Ansari
+#
+# Purpose:
+# - Run Selenium TestNG automation
+# - Generate Extent HTML report
+# - Capture screenshots on failure
+# - Publish reports as pipeline artifacts
+# ============================================================
 
 trigger:
-- main
+  - main
 
 pool:
-  name: Default   # self-hosted Windows agent
+  name: Default   # Self-hosted agent (your laptop)
 
 steps:
 
-# 1️ Verify Java
-- script: |
-    echo JAVA_HOME=%JAVA_HOME%
-    where java
-    java -version
-  displayName: 'Verify Java Version'
+  # ------------------------------------------------------------
+  # STEP 1: Verify Java
+  # ------------------------------------------------------------
+  - script: |
+      echo JAVA_HOME=%JAVA_HOME%
+      where java
+      java -version
+    displayName: 'Verify Java Version'
 
-# 2️ Verify Maven
-- script: |
-    where mvn
-    mvn -version
-  displayName: 'Verify Maven Version'
+  # ------------------------------------------------------------
+  # STEP 2: Verify Maven
+  # ------------------------------------------------------------
+  - script: |
+      where mvn
+      mvn -version
+    displayName: 'Verify Maven Version'
 
-# 3 Build & Run Selenium Tests (HEADLESS)
-- script: |
-    mvn clean test
-  displayName: 'Build & Run Selenium Tests'
+  # ------------------------------------------------------------
+  # STEP 3: Build & Run Selenium Tests
+  # ------------------------------------------------------------
+  - script: |
+      mvn clean test
+    displayName: 'Build & Run Selenium Tests'
 
-# 4 Publish Test Results (even if tests fail)
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  displayName: 'Publish Test Results'
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+  # ------------------------------------------------------------
+  # STEP 4: Publish JUnit Results (Azure UI)
+  # ------------------------------------------------------------
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    displayName: 'Publish Test Results'
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+  # ------------------------------------------------------------
+  # STEP 5: Publish Extent Report + Screenshots
+  # ------------------------------------------------------------
+  - task: PublishBuildArtifacts@1
+    condition: succeededOrFailed()
+    displayName: 'Publish Automation Reports'
+    inputs:
+      PathtoPublish: |
+        reports
+        screenshots
+        target/surefire-reports
+      ArtifactName: 'automation-test-reports'
+      publishLocation: 'Container'
