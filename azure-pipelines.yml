@@ -19,7 +19,7 @@ trigger:
 
 
 # ------------------------------------------------------------
-# Use Self-Hosted Agent (installed on your laptop)
+# Use Self-Hosted Agent
 # ------------------------------------------------------------
 pool:
   name: Default
@@ -34,7 +34,7 @@ steps:
     echo Current JAVA_HOME=%JAVA_HOME%
     where java
     java -version
-  displayName: 'Verify Default Java (Java 11)'
+  displayName: 'Verify Default Java'
 
 
 # ------------------------------------------------------------
@@ -43,17 +43,11 @@ steps:
 - script: |
     where mvn
     mvn -version
-  displayName: 'Verify Maven Installation'
+  displayName: 'Verify Maven'
 
 
 # ------------------------------------------------------------
 # STEP 3 – Build Project and Run Selenium Tests
-#
-# mvn clean test will:
-# 1. Clean previous builds
-# 2. Compile project
-# 3. Run TestNG tests
-# 4. Generate Surefire reports
 # ------------------------------------------------------------
 - script: |
     mvn -B clean test
@@ -61,19 +55,22 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 4 – Clean Sonar Maven Cache
-# Prevent corrupted plugin downloads
+# STEP 4 – Reset Maven Cache for Azure Agent
+# Fixes Sonar PluginContainerException
 # ------------------------------------------------------------
 - script: |
-    IF EXIST "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource" (
-        rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource"
+    echo Resetting Maven cache used by Azure agent
+
+    IF EXIST "C:\Windows\ServiceProfiles\NetworkService\.m2" (
+        rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2"
     )
-  displayName: 'Clean Sonar Maven Cache'
+
+    mkdir "C:\Windows\ServiceProfiles\NetworkService\.m2"
+  displayName: 'Reset Maven Cache'
 
 
 # ------------------------------------------------------------
 # STEP 5 – Switch to Java 17 for SonarCloud
-# Sonar scanner requires Java 17+
 # ------------------------------------------------------------
 - script: |
     echo Switching to Java 17 for SonarCloud
@@ -83,12 +80,12 @@ steps:
 
     echo JAVA_HOME=%JAVA_HOME%
     java -version
-  displayName: 'Switch to Java 17 for Sonar'
+  displayName: 'Switch to Java 17'
 
 
 # ------------------------------------------------------------
-# STEP 6 – Run SonarCloud Static Code Analysis
-# Force plugin version to avoid Maven plugin container errors
+# STEP 6 – Run SonarCloud Analysis
+# Explicit plugin version prevents plugin loading errors
 # ------------------------------------------------------------
 - script: |
     mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar ^
@@ -100,7 +97,7 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 7 – Publish Test Results to Azure DevOps
+# STEP 7 – Publish Test Results
 # ------------------------------------------------------------
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
@@ -111,7 +108,7 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 8 – Publish Automation Reports as Artifacts
+# STEP 8 – Publish Automation Reports
 # ------------------------------------------------------------
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Automation Reports'
