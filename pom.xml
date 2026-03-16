@@ -33,8 +33,8 @@
         <sonar.organization>newsana22</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
-        <!-- FIXED source separation -->
-        <sonar.sources>src/main/java</sonar.sources>
+        <!-- FIXED for your framework structure -->
+        <sonar.sources>src</sonar.sources>
         <sonar.tests>src/test/java</sonar.tests>
 
         <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
