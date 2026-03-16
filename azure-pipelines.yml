@@ -56,40 +56,42 @@ steps:
 # 4. Generate Surefire reports
 # ------------------------------------------------------------
 - script: |
-    mvn clean test
+    mvn -B clean test
   displayName: 'Build and Run Selenium Tests'
 
 
 # ------------------------------------------------------------
 # STEP 4 – Clean Sonar Maven Cache
-# Fixes corrupted Sonar plugin downloads
+# Prevent corrupted plugin downloads
 # ------------------------------------------------------------
 - script: |
-    rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource"
+    IF EXIST "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource" (
+        rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource"
+    )
   displayName: 'Clean Sonar Maven Cache'
 
 
 # ------------------------------------------------------------
-# STEP 5 – Switch to Java 17 (Required for SonarCloud)
-#
-# We temporarily switch Java only for Sonar analysis
-# Default system Java remains Java 11
+# STEP 5 – Switch to Java 17 for SonarCloud
+# Sonar scanner requires Java 17+
 # ------------------------------------------------------------
 - script: |
     echo Switching to Java 17 for SonarCloud
+
     set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot
     set PATH=%JAVA_HOME%\bin;%PATH%
+
+    echo JAVA_HOME=%JAVA_HOME%
     java -version
   displayName: 'Switch to Java 17 for Sonar'
 
 
 # ------------------------------------------------------------
 # STEP 6 – Run SonarCloud Static Code Analysis
-#
-# mvn verify ensures full Maven lifecycle execution
+# Force plugin version to avoid Maven plugin container errors
 # ------------------------------------------------------------
 - script: |
-    mvn verify sonar:sonar ^
+    mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar ^
       -Dsonar.projectKey=newsana22_scb-login-automation ^
       -Dsonar.organization=newsana22 ^
       -Dsonar.host.url=https://sonarcloud.io ^
@@ -110,8 +112,6 @@ steps:
 
 # ------------------------------------------------------------
 # STEP 8 – Publish Automation Reports as Artifacts
-#
-# Uploads reports, screenshots, logs etc.
 # ------------------------------------------------------------
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Automation Reports'
