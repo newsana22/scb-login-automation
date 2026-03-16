@@ -39,19 +39,29 @@
 
         <!--
         IMPORTANT FIX:
-        Previously Sonar scanned the same files twice because:
+
+        Previously Sonar scanned the same files twice because
+        we manually defined source folders.
+
+        Example of problematic configuration:
 
         sonar.sources = src
-        sonar.tests = src/test/java
+        sonar.tests   = src/test/java
 
-        Since src already contains src/test/java, Sonar attempted
-        to index the same files twice which caused the pipeline failure.
+        Since src already contains src/test/java,
+        Sonar attempted to index the same files twice,
+        which caused the pipeline failure.
 
-        To avoid duplicate indexing we now scan only the actual
-        Java test source directory.
+        Correct solution:
+        Let Maven automatically detect source and test folders.
+
+        Maven standard structure:
+        src/main/java → source code
+        src/test/java → test code
+
+        Sonar automatically understands this structure,
+        so we DO NOT define sonar.sources or sonar.tests manually.
         -->
-
-        <sonar.sources>src/test/java</sonar.sources>
 
         <!-- Encoding -->
         <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
