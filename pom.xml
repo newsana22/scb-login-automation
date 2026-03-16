@@ -17,10 +17,32 @@
     <!-- Java & Encoding -->
     <!-- ===================== -->
     <properties>
-        <java.version>11</java.version>
+        <!-- Updated Java version -->
+        <java.version>17</java.version>
+
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- SonarCloud Properties -->
+        <sonar.projectKey>newsana22_scb-login-automation</sonar.projectKey>
+        <sonar.organization>newsana22</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
+        <!-- Sonar analysis configuration -->
+        <sonar.java.source>${java.version}</sonar.java.source>
+        <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
+        <sonar.sources>src</sonar.sources>
+        <sonar.tests>src/test</sonar.tests>
+
+        <!-- Ignore generated files -->
+        <sonar.exclusions>**/target/**</sonar.exclusions>
+
+        <!-- JaCoCo report path for Sonar -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+
     </properties>
 
     <!-- ===================== -->
@@ -111,6 +133,36 @@
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
                 </configuration>
+            </plugin>
+
+            <!-- ===================== -->
+            <!-- JaCoCo Code Coverage -->
+            <!-- ===================== -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+
+                <executions>
+
+                    <!-- Prepare JaCoCo agent -->
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- Generate coverage report -->
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+
+                </executions>
+
             </plugin>
 
         </plugins>
