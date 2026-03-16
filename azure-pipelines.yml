@@ -1,17 +1,5 @@
 # ============================================================
 # Azure DevOps Pipeline – Selenium Automation with SonarCloud
-# Author: Sana Ansari
-#
-# Purpose
-# - Run Selenium TestNG automation
-# - Generate automation reports
-# - Publish test results to Azure DevOps
-# - Publish reports as build artifacts
-# - Run SonarCloud static code analysis
-#
-# Environment
-# Java 11 → Selenium build
-# Java 17 → SonarCloud analysis
 # ============================================================
 
 trigger:
@@ -23,57 +11,32 @@ pool:
 
 steps:
 
-# ------------------------------------------------------------
-# STEP 1 – Verify Default Java
-# ------------------------------------------------------------
+# Verify Java
 - script: |
-    echo Current JAVA_HOME=%JAVA_HOME%
-    where java
+    echo JAVA_HOME=%JAVA_HOME%
     java -version
-  displayName: 'Verify Default Java'
+  displayName: 'Verify Java'
 
 
-# ------------------------------------------------------------
-# STEP 2 – Verify Maven
-# ------------------------------------------------------------
+# Verify Maven
 - script: |
-    where mvn
     mvn -version
   displayName: 'Verify Maven'
 
 
-# ------------------------------------------------------------
-# STEP 3 – Build and Run Selenium Tests
-# ------------------------------------------------------------
+# Run Selenium Tests
 - script: |
     mvn -B clean test
   displayName: 'Build and Run Selenium Tests'
 
 
-# ------------------------------------------------------------
-# STEP 4 – Reset Maven Cache
-# ------------------------------------------------------------
+# Run SonarCloud with Java 17
 - script: |
-    echo Resetting Maven cache used by Azure agent
-
-    IF EXIST "C:\Windows\ServiceProfiles\NetworkService\.m2" (
-        rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2"
-    )
-
-    mkdir "C:\Windows\ServiceProfiles\NetworkService\.m2"
-  displayName: 'Reset Maven Cache'
-
-
-# ------------------------------------------------------------
-# STEP 5 – Run SonarCloud Analysis (Java 17)
-# ------------------------------------------------------------
-- script: |
-    echo Switching to Java 17 for SonarCloud
+    echo Switching to Java 17
 
     set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot
     set PATH=%JAVA_HOME%\bin;%PATH%
 
-    echo JAVA_HOME=%JAVA_HOME%
     java -version
 
     mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar ^
@@ -85,9 +48,7 @@ steps:
   displayName: 'Run SonarCloud Analysis'
 
 
-# ------------------------------------------------------------
-# STEP 6 – Publish Test Results
-# ------------------------------------------------------------
+# Publish Test Results
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
   condition: succeededOrFailed()
@@ -96,9 +57,7 @@ steps:
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
 
-# ------------------------------------------------------------
-# STEP 7 – Publish Automation Reports
-# ------------------------------------------------------------
+# Publish Reports
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Automation Reports'
   condition: succeededOrFailed()
