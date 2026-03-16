@@ -1,6 +1,7 @@
 # ============================================================
-# Azure DevOps Pipeline – Selenium Automation with SonarCloud
-# Clean CI Pipeline using Java 17 + JaCoCo Coverage
+# Azure DevOps Pipeline – Selenium Automation Framework
+# Using Java 17 + Maven + SonarCloud + JaCoCo
+# Agent: Self-hosted (Laptop)
 # ============================================================
 
 trigger:
@@ -12,44 +13,81 @@ pool:
 steps:
 
   # ------------------------------------------------------------
-  # STEP 1 – Verify Java (Agent Environment)
+  # STEP 1 – Verify Java Environment
   # ------------------------------------------------------------
   - script: |
+      echo "Checking Java version used by the agent"
       echo JAVA_HOME=%JAVA_HOME%
       java -version
-    displayName: 'Verify Java Environment'
+    displayName: 'Verify Java Environment (Java 17)'
 
   # ------------------------------------------------------------
-  # STEP 2 – Verify Maven
+  # STEP 2 – Verify Maven Installation
   # ------------------------------------------------------------
   - script: |
+      echo "Checking Maven installation"
       mvn -version
     displayName: 'Verify Maven Installation'
 
   # ------------------------------------------------------------
-  # STEP 3 – Run Selenium Tests + JaCoCo + SonarCloud Analysis
+  # STEP 3 – Clean Previous Build
   # ------------------------------------------------------------
   - script: |
-      mvn -B clean verify sonar:sonar ^
-        -Dsonar.token=$(SONAR_TOKEN)
-    displayName: 'Run Selenium Tests and SonarCloud Analysis'
+      echo "Cleaning previous Maven build artifacts"
+      mvn clean
+    displayName: 'Clean Maven Project'
 
   # ------------------------------------------------------------
-  # STEP 4 – Publish Test Results
+  # STEP 4 – Compile Project
+  # ------------------------------------------------------------
+  - script: |
+      echo "Compiling project source code"
+      mvn compile
+    displayName: 'Compile Source Code'
+
+  # ------------------------------------------------------------
+  # STEP 5 – Run Selenium Automation Tests
+  # ------------------------------------------------------------
+  - script: |
+      echo "Running Selenium TestNG automation tests"
+      mvn test
+    displayName: 'Run Selenium Tests'
+
+  # ------------------------------------------------------------
+  # STEP 6 – Generate JaCoCo Code Coverage Report
+  # ------------------------------------------------------------
+  - script: |
+      echo "Generating JaCoCo coverage report"
+      mvn verify
+    displayName: 'Generate JaCoCo Coverage Report'
+
+  # ------------------------------------------------------------
+  # STEP 7 – Run SonarCloud Code Analysis
+  # ------------------------------------------------------------
+  - script: |
+      echo "Running SonarCloud static code analysis"
+      mvn sonar:sonar ^
+        -Dsonar.token=$(SONAR_TOKEN)
+    displayName: 'Run SonarCloud Analysis'
+
+  # ------------------------------------------------------------
+  # STEP 8 – Publish Test Results
   # ------------------------------------------------------------
   - task: PublishTestResults@2
     displayName: 'Publish Test Results'
     condition: succeededOrFailed()
+
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
   # ------------------------------------------------------------
-  # STEP 5 – Publish Automation Reports
+  # STEP 9 – Publish Automation Reports
   # ------------------------------------------------------------
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Automation Reports'
     condition: succeededOrFailed()
+
     inputs:
       PathtoPublish: '$(System.DefaultWorkingDirectory)'
       ArtifactName: 'automation-test-reports'

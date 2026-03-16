@@ -17,28 +17,32 @@
     <!-- Java & Encoding -->
     <!-- ===================== -->
     <properties>
-        <!-- Updated Java version -->
-        <java.version>17</java.version>
 
+        <!-- Java Version -->
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- SonarCloud Properties -->
+        <!-- ===================== -->
+        <!-- SonarCloud Configuration -->
+        <!-- ===================== -->
+
         <sonar.projectKey>newsana22_scb-login-automation</sonar.projectKey>
         <sonar.organization>newsana22</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
-        <!-- Sonar analysis configuration -->
-        <sonar.java.source>${java.version}</sonar.java.source>
-        <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
-        <sonar.sources>src</sonar.sources>
-        <sonar.tests>src/test</sonar.tests>
+        <!-- FIXED source separation -->
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
 
-        <!-- Ignore generated files -->
+        <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
+
+        <!-- Ignore build output -->
         <sonar.exclusions>**/target/**</sonar.exclusions>
 
-        <!-- JaCoCo report path for Sonar -->
+        <!-- JaCoCo coverage report -->
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -79,21 +83,21 @@
             <version>5.2.5</version>
         </dependency>
 
-        <!-- Extent Reports (HTML Reporting) -->
+        <!-- Extent Reports -->
         <dependency>
             <groupId>com.aventstack</groupId>
             <artifactId>extentreports</artifactId>
             <version>5.1.2</version>
         </dependency>
 
-        <!-- Apache Commons IO (Screenshots) -->
+        <!-- Apache Commons IO -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.15.1</version>
         </dependency>
 
-        <!-- SLF4J Simple (fixes CI logging warnings) -->
+        <!-- SLF4J Simple -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -103,37 +107,50 @@
     </dependencies>
 
     <!-- ===================== -->
-    <!-- Build -->
+    <!-- Build Plugins -->
     <!-- ===================== -->
     <build>
         <plugins>
 
-            <!-- Compiler -->
+            <!-- ===================== -->
+            <!-- Maven Compiler -->
+            <!-- ===================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
+
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
+
             </plugin>
 
-            <!-- Surefire (TestNG + Reports) -->
+
+            <!-- ===================== -->
+            <!-- Surefire (TestNG) -->
+            <!-- ===================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+
                 <configuration>
+
                     <suiteXmlFiles>
                         <suiteXmlFile>
                             src/test/resources/testng.xml
                         </suiteXmlFile>
                     </suiteXmlFiles>
+
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
+
                 </configuration>
+
             </plugin>
+
 
             <!-- ===================== -->
             <!-- JaCoCo Code Coverage -->
@@ -145,7 +162,7 @@
 
                 <executions>
 
-                    <!-- Prepare JaCoCo agent -->
+                    <!-- Attach JaCoCo agent -->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
@@ -156,9 +173,11 @@
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
+
                         <goals>
                             <goal>report</goal>
                         </goals>
+
                     </execution>
 
                 </executions>
