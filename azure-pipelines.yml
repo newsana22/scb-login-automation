@@ -5,68 +5,90 @@
 # Purpose:
 # - Run Selenium TestNG automation
 # - Generate Extent HTML report
-# - Capture step-level screenshots (Base64)
+# - Capture screenshots on failure
 # - Publish reports as pipeline artifacts
+# - Run SonarCloud static code analysis using Maven
 # ============================================================
 
+# ------------------------------------------------------------
+# Trigger pipeline whenever code is pushed to main branch
+# ------------------------------------------------------------
 trigger:
-  - main
+- main
 
 # ------------------------------------------------------------
-# Use self-hosted agent (your laptop)
+# Use your self-hosted agent (installed on your laptop)
 # ------------------------------------------------------------
 pool:
   name: Default
 
 steps:
 
-  # ------------------------------------------------------------
-  # STEP 1: Verify Java installation
-  # ------------------------------------------------------------
-  - script: |
-      echo JAVA_HOME=%JAVA_HOME%
-      where java
-      java -version
-    displayName: 'Verify Java Version'
+# ------------------------------------------------------------
+# STEP 1 – Verify Java Installation
+# Ensures the agent machine has Java installed
+# Selenium and Maven require Java
+# ------------------------------------------------------------
+- script: |
+    echo JAVA_HOME=%JAVA_HOME%
+    where java
+    java -version
+  displayName: 'Verify Java Version'
 
-  # ------------------------------------------------------------
-  # STEP 2: Verify Maven installation
-  # ------------------------------------------------------------
-  - script: |
-      where mvn
-      mvn -version
-    displayName: 'Verify Maven Version'
+# ------------------------------------------------------------
+# STEP 2 – Verify Maven Installation
+# Ensures Maven is available on the self-hosted agent
+# ------------------------------------------------------------
+- script: |
+    where mvn
+    mvn -version
+  displayName: 'Verify Maven Version'
 
-  # ------------------------------------------------------------
-  # STEP 3: Build & Run Selenium Tests
-  # ------------------------------------------------------------
-  - script: |
-      mvn clean test
-    displayName: 'Build & Run Selenium Tests'
+# ------------------------------------------------------------
+# STEP 3 – Build Project and Run Selenium Tests
+# mvn clean test will:
+# 1. Clean previous builds
+# 2. Compile Java code
+# 3. Execute TestNG tests
+# 4. Generate Surefire + Extent reports
+# ------------------------------------------------------------
+- script: |
+    mvn clean test
+  displayName: 'Build & Run Selenium Tests'
 
-  # ------------------------------------------------------------
-  # STEP 4: Publish TestNG / JUnit Results to Azure UI
-  # ------------------------------------------------------------
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results'
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      mergeTestResults: true
+# ------------------------------------------------------------
+# STEP 4 – Run SonarCloud Code Analysis using Maven
+#
+# sonar:sonar runs static code analysis and sends results
+# to SonarCloud using the project key and organization
+# ------------------------------------------------------------
+- script: |
+    mvn sonar:sonar ^
+      -Dsonar.projectKey=newsana22_scb-login-automation ^
+      -Dsonar.organization=newsana22 ^
+      -Dsonar.host.url=https://sonarcloud.io ^
+      -Dsonar.login=$(SONAR_TOKEN)
+  displayName: 'Run SonarCloud Analysis'
 
-  # ------------------------------------------------------------
-  # STEP 5: Publish Automation Reports (SAFE – Option 1)
-  # ------------------------------------------------------------
-  # WHY:
-  # - Prevents "Path not found" errors
-  # - Ensures Extent report + screenshots are always available
-  # - Best practice for CI pipelines
-  # ------------------------------------------------------------
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Automation Reports'
-    condition: succeededOrFailed()
-    inputs:
-      PathtoPublish: '$(System.DefaultWorkingDirectory)'
-      ArtifactName: 'automation-test-reports'
-      publishLocation: 'Container'
+# ------------------------------------------------------------
+# STEP 5 – Publish Test Results to Azure DevOps UI
+# Azure DevOps will display TestNG results in the pipeline
+# ------------------------------------------------------------
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+# ------------------------------------------------------------
+# STEP 6 – Publish Automation Reports
+# Upload Extent reports, screenshots and logs as artifacts
+# ------------------------------------------------------------
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Automation Reports'
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)'
+    ArtifactName: 'automation-test-reports'
+    publishLocation: 'Container'
