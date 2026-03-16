@@ -1,25 +1,25 @@
 # ============================================================
-# Azure DevOps Pipeline – Selenium Automation
+# Azure DevOps Pipeline – Selenium Automation with SonarCloud
 # Author: Sana Ansari
 #
-# Purpose:
+# Purpose
 # - Run Selenium TestNG automation
-# - Generate Extent HTML report
-# - Capture screenshots on failure
-# - Publish reports as pipeline artifacts
-# - Run SonarCloud static code analysis using Maven
+# - Generate automation reports
+# - Publish test results to Azure DevOps
+# - Publish reports as build artifacts
+# - Run SonarCloud static code analysis
+#
+# Environment
+# Java 11 → Selenium build
+# Java 17 → SonarCloud analysis
 # ============================================================
 
-
-# ------------------------------------------------------------
-# Trigger pipeline whenever code is pushed to main branch
-# ------------------------------------------------------------
 trigger:
 - main
 
 
 # ------------------------------------------------------------
-# Use your self-hosted agent (installed on your laptop)
+# Use Self-Hosted Agent (installed on your laptop)
 # ------------------------------------------------------------
 pool:
   name: Default
@@ -27,66 +27,42 @@ pool:
 
 steps:
 
-
 # ------------------------------------------------------------
-# STEP 1 – Verify Java Installation
-#
-# This confirms that Java is installed on the self-hosted agent.
-# Selenium + Maven require Java to run.
-#
-# echo JAVA_HOME  → shows Java environment path
-# where java      → shows Java executable location
-# java -version   → prints installed Java version
+# STEP 1 – Verify Default Java (Java 11)
 # ------------------------------------------------------------
 - script: |
-    echo JAVA_HOME=%JAVA_HOME%
+    echo Current JAVA_HOME=%JAVA_HOME%
     where java
     java -version
-  displayName: 'Verify Java Version'
+  displayName: 'Verify Default Java (Java 11)'
 
 
 # ------------------------------------------------------------
 # STEP 2 – Verify Maven Installation
-#
-# Ensures Maven is installed and available in system PATH.
-#
-# where mvn → shows Maven executable location
-# mvn -version → prints Maven + Java environment info
 # ------------------------------------------------------------
 - script: |
     where mvn
     mvn -version
-  displayName: 'Verify Maven Version'
+  displayName: 'Verify Maven Installation'
 
 
 # ------------------------------------------------------------
 # STEP 3 – Build Project and Run Selenium Tests
 #
-# mvn clean test performs:
-#
-# clean  → removes previous build artifacts
-# compile → compiles Java source code
-# test   → executes TestNG Selenium tests
-#
-# After execution Maven generates:
-#
-# target/surefire-reports  → JUnit test results
-# reports/                 → Extent HTML report
-# screenshots/             → failure screenshots
+# mvn clean test will:
+# 1. Clean previous builds
+# 2. Compile project
+# 3. Run TestNG tests
+# 4. Generate Surefire reports
 # ------------------------------------------------------------
 - script: |
     mvn clean test
-  displayName: 'Build & Run Selenium Tests'
+  displayName: 'Build and Run Selenium Tests'
 
 
 # ------------------------------------------------------------
-# STEP 4 – Clean Sonar Maven Cache (Fix Plugin Conflict)
-#
-# Sometimes Maven downloads a corrupted Sonar plugin.
-# Deleting the Sonar plugin folder forces Maven to download
-# a fresh version during the next run.
-#
-# This resolves PluginContainerException errors.
+# STEP 4 – Clean Sonar Maven Cache
+# Fixes corrupted Sonar plugin downloads
 # ------------------------------------------------------------
 - script: |
     rmdir /s /q "C:\Windows\ServiceProfiles\NetworkService\.m2\repository\org\sonarsource"
@@ -94,21 +70,23 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 5 – Run SonarCloud Static Code Analysis
+# STEP 5 – Switch to Java 17 (Required for SonarCloud)
 #
-# mvn verify sonar:sonar runs:
+# We temporarily switch Java only for Sonar analysis
+# Default system Java remains Java 11
+# ------------------------------------------------------------
+- script: |
+    echo Switching to Java 17 for SonarCloud
+    set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot
+    set PATH=%JAVA_HOME%\bin;%PATH%
+    java -version
+  displayName: 'Switch to Java 17 for Sonar'
+
+
+# ------------------------------------------------------------
+# STEP 6 – Run SonarCloud Static Code Analysis
 #
-# verify      → completes the Maven lifecycle
-# sonar:sonar → executes SonarCloud analysis
-#
-# Parameters explained:
-#
-# sonar.projectKey  → unique SonarCloud project identifier
-# sonar.organization → SonarCloud organization
-# sonar.host.url → SonarCloud server URL
-# sonar.login → authentication token stored in pipeline
-#
-# SONAR_TOKEN is stored securely in Azure DevOps variables.
+# mvn verify ensures full Maven lifecycle execution
 # ------------------------------------------------------------
 - script: |
     mvn verify sonar:sonar ^
@@ -120,13 +98,7 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 6 – Publish Test Results to Azure DevOps UI
-#
-# This task reads JUnit XML files generated by Maven
-# and displays them in the Azure DevOps pipeline UI.
-#
-# condition: succeededOrFailed()
-# ensures results are published even if tests fail.
+# STEP 7 – Publish Test Results to Azure DevOps
 # ------------------------------------------------------------
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
@@ -137,18 +109,9 @@ steps:
 
 
 # ------------------------------------------------------------
-# STEP 7 – Publish Automation Reports
+# STEP 8 – Publish Automation Reports as Artifacts
 #
-# This uploads the following files as pipeline artifacts:
-#
-# Extent HTML reports
-# screenshots from failed tests
-# surefire reports
-#
-# $(System.DefaultWorkingDirectory) points to the
-# root folder where the pipeline runs.
-#
-# Artifacts can be downloaded after pipeline execution.
+# Uploads reports, screenshots, logs etc.
 # ------------------------------------------------------------
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Automation Reports'
