@@ -19,35 +19,53 @@
     <properties>
 
         <!-- Java Version -->
+        <!-- Project is compiled using Java 17 -->
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
+        <!-- Encoding for project files -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 
         <!-- ===================== -->
         <!-- SonarCloud Configuration -->
         <!-- ===================== -->
 
+        <!-- SonarCloud project identification -->
         <sonar.projectKey>newsana22_scb-login-automation</sonar.projectKey>
         <sonar.organization>newsana22</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
-        <!-- FIXED for your framework structure -->
-        <sonar.sources>src</sonar.sources>
-        <sonar.tests>src/test/java</sonar.tests>
+        <!--
+        IMPORTANT FIX:
+        Previously Sonar scanned the same files twice because:
 
+        sonar.sources = src
+        sonar.tests = src/test/java
+
+        Since src already contains src/test/java, Sonar attempted
+        to index the same files twice which caused the pipeline failure.
+
+        To avoid duplicate indexing we now scan only the actual
+        Java test source directory.
+        -->
+
+        <sonar.sources>src/test/java</sonar.sources>
+
+        <!-- Encoding -->
         <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
 
-        <!-- Ignore build output -->
+        <!-- Ignore build output folders -->
         <sonar.exclusions>**/target/**</sonar.exclusions>
 
-        <!-- JaCoCo coverage report -->
+        <!-- JaCoCo coverage report used by SonarCloud -->
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
 
     </properties>
+
 
     <!-- ===================== -->
     <!-- Dependencies -->
@@ -55,6 +73,7 @@
     <dependencies>
 
         <!-- Selenium WebDriver -->
+        <!-- Core automation library used for browser automation -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
@@ -62,6 +81,7 @@
         </dependency>
 
         <!-- TestNG -->
+        <!-- Testing framework used for executing automation tests -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
@@ -70,13 +90,15 @@
         </dependency>
 
         <!-- WebDriverManager -->
+        <!-- Automatically downloads correct browser drivers -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
             <version>6.3.3</version>
         </dependency>
 
-        <!-- Apache POI (Excel) -->
+        <!-- Apache POI -->
+        <!-- Used for Excel test data handling -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
@@ -84,6 +106,7 @@
         </dependency>
 
         <!-- Extent Reports -->
+        <!-- Generates HTML automation reports -->
         <dependency>
             <groupId>com.aventstack</groupId>
             <artifactId>extentreports</artifactId>
@@ -91,6 +114,7 @@
         </dependency>
 
         <!-- Apache Commons IO -->
+        <!-- Used for file operations such as saving screenshots -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -98,6 +122,7 @@
         </dependency>
 
         <!-- SLF4J Simple -->
+        <!-- Lightweight logger used in CI pipelines -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -106,6 +131,7 @@
 
     </dependencies>
 
+
     <!-- ===================== -->
     <!-- Build Plugins -->
     <!-- ===================== -->
@@ -113,7 +139,8 @@
         <plugins>
 
             <!-- ===================== -->
-            <!-- Maven Compiler -->
+            <!-- Maven Compiler Plugin -->
+            <!-- Compiles Java source code -->
             <!-- ===================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -129,7 +156,8 @@
 
 
             <!-- ===================== -->
-            <!-- Surefire (TestNG) -->
+            <!-- Maven Surefire Plugin -->
+            <!-- Executes TestNG test suites -->
             <!-- ===================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -138,12 +166,14 @@
 
                 <configuration>
 
+                    <!-- TestNG suite file -->
                     <suiteXmlFiles>
                         <suiteXmlFile>
                             src/test/resources/testng.xml
                         </suiteXmlFile>
                     </suiteXmlFiles>
 
+                    <!-- Prevent JVM reuse for stability in CI -->
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
 
@@ -153,7 +183,8 @@
 
 
             <!-- ===================== -->
-            <!-- JaCoCo Code Coverage -->
+            <!-- JaCoCo Code Coverage Plugin -->
+            <!-- Generates code coverage reports -->
             <!-- ===================== -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -162,14 +193,14 @@
 
                 <executions>
 
-                    <!-- Attach JaCoCo agent -->
+                    <!-- Attach JaCoCo agent before tests -->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
 
-                    <!-- Generate coverage report -->
+                    <!-- Generate coverage report after tests -->
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
