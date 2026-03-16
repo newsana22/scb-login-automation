@@ -1,67 +1,56 @@
 # ============================================================
 # Azure DevOps Pipeline – Selenium Automation with SonarCloud
+# Clean CI Pipeline using Java 17 + JaCoCo Coverage
 # ============================================================
 
 trigger:
-- main
+  - main
 
 pool:
   name: Default
 
-
 steps:
 
-# Verify Java
-- script: |
-    echo JAVA_HOME=%JAVA_HOME%
-    java -version
-  displayName: 'Verify Java'
+  # ------------------------------------------------------------
+  # STEP 1 – Verify Java (Agent Environment)
+  # ------------------------------------------------------------
+  - script: |
+      echo JAVA_HOME=%JAVA_HOME%
+      java -version
+    displayName: 'Verify Java Environment'
 
+  # ------------------------------------------------------------
+  # STEP 2 – Verify Maven
+  # ------------------------------------------------------------
+  - script: |
+      mvn -version
+    displayName: 'Verify Maven Installation'
 
-# Verify Maven
-- script: |
-    mvn -version
-  displayName: 'Verify Maven'
+  # ------------------------------------------------------------
+  # STEP 3 – Run Selenium Tests + JaCoCo + SonarCloud Analysis
+  # ------------------------------------------------------------
+  - script: |
+      mvn -B clean verify sonar:sonar ^
+        -Dsonar.token=$(SONAR_TOKEN)
+    displayName: 'Run Selenium Tests and SonarCloud Analysis'
 
+  # ------------------------------------------------------------
+  # STEP 4 – Publish Test Results
+  # ------------------------------------------------------------
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results'
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-# Run Selenium Tests
-- script: |
-    mvn -B clean test
-  displayName: 'Build and Run Selenium Tests'
-
-
-# Run SonarCloud with Java 17
-- script: |
-    echo Switching to Java 17
-
-    set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot
-    set PATH=%JAVA_HOME%\bin;%PATH%
-
-    java -version
-
-    mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar ^
-      -Dsonar.projectKey=newsana22_scb-login-automation ^
-      -Dsonar.organization=newsana22 ^
-      -Dsonar.host.url=https://sonarcloud.io ^
-      -Dsonar.login=$(SONAR_TOKEN)
-
-  displayName: 'Run SonarCloud Analysis'
-
-
-# Publish Test Results
-- task: PublishTestResults@2
-  displayName: 'Publish Test Results'
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-
-
-# Publish Reports
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Automation Reports'
-  condition: succeededOrFailed()
-  inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)'
-    ArtifactName: 'automation-test-reports'
-    publishLocation: 'Container'
+  # ------------------------------------------------------------
+  # STEP 5 – Publish Automation Reports
+  # ------------------------------------------------------------
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Automation Reports'
+    condition: succeededOrFailed()
+    inputs:
+      PathtoPublish: '$(System.DefaultWorkingDirectory)'
+      ArtifactName: 'automation-test-reports'
+      publishLocation: 'Container'
